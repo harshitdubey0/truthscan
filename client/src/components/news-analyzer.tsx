@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader } from "@/components/ui/card";
 import { AlertCircle, CheckCircle2, Loader2, Newspaper, ShieldCheck, BarChart3 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip as RechartsTooltip, Legend } from 'recharts';
+import { useToast } from "@/hooks/use-toast";
 
 type AnalysisResult = {
   verdict: "real" | "fake";
@@ -16,42 +17,93 @@ type AnalysisResult = {
   }[];
 };
 
+type StatsData = {
+  totalScans: number;
+  fakeCount: number;
+  realCount: number;
+  fakePercentage: number;
+  realPercentage: number;
+};
+
 export function NewsAnalyzer() {
   const [text, setText] = useState("");
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [result, setResult] = useState<AnalysisResult | null>(null);
   const [showLiveAnalysis, setShowLiveAnalysis] = useState(false);
+  const [stats, setStats] = useState<StatsData | null>(null);
+  const { toast } = useToast();
 
-  const handleAnalyze = () => {
-    if (!text.trim()) return;
+  // Fetch stats when Live Analysis is shown
+  useEffect(() => {
+    if (showLiveAnalysis) {
+      fetchStats();
+    }
+  }, [showLiveAnalysis, result]); // Re-fetch when a new analysis completes
+
+  const fetchStats = async () => {
+    try {
+      const response = await fetch('/api/stats');
+      if (response.ok) {
+        const data = await response.json();
+        setStats(data);
+      }
+    } catch (error) {
+      console.error('Failed to fetch stats:', error);
+    }
+  };
+
+  const handleAnalyze = async () => {
+    if (!text.trim() || text.trim().length < 50) {
+      toast({
+        title: "Text too short",
+        description: "Please provide at least 50 characters of article text.",
+        variant: "destructive",
+      });
+      return;
+    }
 
     setIsAnalyzing(true);
     setResult(null);
-    setShowLiveAnalysis(false);
 
-    // Simulate API latency
-    setTimeout(() => {
-      const isFake = Math.random() > 0.5; 
-      const confidence = Math.floor(Math.random() * 20) + 80; // 80-99%
-
-      setResult({
-        verdict: isFake ? "fake" : "real",
-        confidence: confidence,
-        models: [
-          { name: "Logistic Regression", prediction: isFake ? "Fake" : "Real", confidence: Math.floor(Math.random() * 10) + 90 },
-          { name: "Decision Tree", prediction: isFake ? "Fake" : "Real", confidence: Math.floor(Math.random() * 15) + 80 },
-          { name: "Gradient Boosting", prediction: isFake ? "Fake" : "Real", confidence: Math.floor(Math.random() * 5) + 95 },
-          { name: "Random Forest", prediction: isFake ? "Fake" : "Real", confidence: Math.floor(Math.random() * 8) + 92 },
-        ]
+    try {
+      const response = await fetch('/api/analyze', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ text }),
       });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Analysis failed');
+      }
+
+      const data = await response.json();
+      setResult(data);
+      
+      toast({
+        title: "Analysis Complete",
+        description: `Article classified as ${data.verdict === 'real' ? 'Authentic' : 'Fake'} news with ${data.confidence}% confidence.`,
+      });
+    } catch (error: any) {
+      toast({
+        title: "Analysis Failed",
+        description: error.message || "Failed to analyze the article. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
       setIsAnalyzing(false);
-    }, 1500);
+    }
   };
 
   // Data for Live Analysis Chart
-  const liveData = [
-    { name: 'Real News', value: 52, color: '#10b981' }, // Emerald-500
-    { name: 'Fake News', value: 48, color: '#f43f5e' }, // Rose-500
+  const liveData = stats ? [
+    { name: 'Real News', value: stats.realPercentage || 50, count: stats.realCount, color: '#10b981' },
+    { name: 'Fake News', value: stats.fakePercentage || 50, count: stats.fakeCount, color: '#f43f5e' },
+  ] : [
+    { name: 'Real News', value: 50, count: 0, color: '#10b981' },
+    { name: 'Fake News', value: 50, count: 0, color: '#f43f5e' },
   ];
 
   return (
@@ -70,6 +122,7 @@ export function NewsAnalyzer() {
                size="sm"
                onClick={() => setShowLiveAnalysis(!showLiveAnalysis)}
                className={`${showLiveAnalysis ? 'bg-primary/10 text-primary border-primary/20' : ''}`}
+               data-testid="button-toggle-live-analysis"
              >
                 <BarChart3 className="w-4 h-4 mr-2" />
                 {showLiveAnalysis ? "Hide Live Stats" : "Live Analysis"}
@@ -109,6 +162,7 @@ export function NewsAnalyzer() {
                         <RechartsTooltip 
                           contentStyle={{ backgroundColor: 'hsl(var(--popover))', borderRadius: '8px', border: '1px solid hsl(var(--border))' }}
                           itemStyle={{ color: 'hsl(var(--foreground))' }}
+                          formatter={(value: any, name: any, props: any) => [`${props.payload.count} articles (${value}%)`, name]}
                         />
                         <Legend verticalAlign="bottom" height={36}/>
                       </PieChart>
@@ -126,8 +180,10 @@ export function NewsAnalyzer() {
                     </div>
                     <div className="p-4 bg-background/50 rounded-xl border border-border/50">
                        <div className="flex justify-between items-center mb-2">
-                          <span className="text-sm text-muted-foreground">Daily Scans</span>
-                          <span className="text-sm font-bold text-primary">14,203</span>
+                          <span className="text-sm text-muted-foreground">Total Scans</span>
+                          <span className="text-sm font-bold text-primary" data-testid="text-total-scans">
+                            {stats?.totalScans.toLocaleString() || 0}
+                          </span>
                        </div>
                        <div className="w-full bg-muted h-1.5 rounded-full overflow-hidden">
                           <div className="bg-blue-500 h-full w-[75%]"></div>
@@ -145,6 +201,7 @@ export function NewsAnalyzer() {
             className="min-h-[200px] text-lg resize-y bg-background/50 border-border/50 focus:border-primary/50 transition-all p-4"
             value={text}
             onChange={(e) => setText(e.target.value)}
+            data-testid="input-article-text"
           />
         </CardContent>
         <CardFooter className="bg-muted/30 p-6 flex justify-end">
@@ -153,6 +210,7 @@ export function NewsAnalyzer() {
             onClick={handleAnalyze} 
             disabled={!text.trim() || isAnalyzing}
             className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold text-lg px-8 h-12 shadow-lg shadow-primary/20 transition-all"
+            data-testid="button-analyze"
           >
             {isAnalyzing ? (
               <>
@@ -177,14 +235,14 @@ export function NewsAnalyzer() {
             exit={{ opacity: 0, y: -20 }}
             transition={{ duration: 0.5, ease: "easeOut" }}
           >
-            <Card className={`border-l-8 overflow-hidden shadow-2xl ${result.verdict === 'real' ? 'border-l-emerald-500' : 'border-l-rose-500'}`}>
+            <Card className={`border-l-8 overflow-hidden shadow-2xl ${result.verdict === 'real' ? 'border-l-emerald-500' : 'border-l-rose-500'}`} data-testid={`card-result-${result.verdict}`}>
               <div className={`absolute top-0 right-0 p-32 opacity-5 blur-3xl rounded-full -translate-y-1/2 translate-x-1/2 ${result.verdict === 'real' ? 'bg-emerald-500' : 'bg-rose-500'}`} />
               
               <CardHeader className="pb-2">
                 <div className="flex items-center justify-between">
                   <div className="space-y-1">
                     <p className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Consensus Verdict</p>
-                    <h3 className={`text-4xl font-serif font-black flex items-center gap-3 ${result.verdict === 'real' ? 'text-emerald-600' : 'text-rose-600'}`}>
+                    <h3 className={`text-4xl font-serif font-black flex items-center gap-3 ${result.verdict === 'real' ? 'text-emerald-600' : 'text-rose-600'}`} data-testid="text-verdict">
                       {result.verdict === 'real' ? (
                         <>
                           <CheckCircle2 className="w-10 h-10" />
@@ -199,7 +257,7 @@ export function NewsAnalyzer() {
                     </h3>
                   </div>
                   <div className="text-right">
-                    <div className="text-5xl font-bold tracking-tighter opacity-20">
+                    <div className="text-5xl font-bold tracking-tighter opacity-20" data-testid="text-confidence">
                       {result.confidence}%
                     </div>
                     <p className="text-sm font-medium text-muted-foreground">Confidence Score</p>
@@ -216,6 +274,7 @@ export function NewsAnalyzer() {
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ delay: index * 0.1 }}
                       className="bg-muted/30 rounded-xl p-4 border border-border/50"
+                      data-testid={`card-model-${model.name.toLowerCase().replace(/\s+/g, '-')}`}
                     >
                       <div className="flex justify-between items-center mb-3">
                         <span className="font-medium flex items-center gap-2">
