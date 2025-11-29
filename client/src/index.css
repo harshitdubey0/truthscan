@@ -46,83 +46,80 @@
   --radius: 0.5rem;
 }
 
-/* LIGHT MODE - Clean, Journalistic, Trustworthy */
+/* LIGHT MODE - Fresh Green & Red Theme */
 :root {
-  /* Pure White Background for readability */
-  --background: 210 20% 98%;
-  --foreground: 222 47% 11%; /* Dark Navy Text */
+  --background: 150 20% 98%;
+  --foreground: 150 30% 10%;
 
-  /* Card - Slightly off-white/paper feeling */
   --card: 0 0% 100%;
-  --card-foreground: 222 47% 11%;
+  --card-foreground: 150 30% 10%;
 
-  /* Popover */
   --popover: 0 0% 100%;
-  --popover-foreground: 222 47% 11%;
+  --popover-foreground: 150 30% 10%;
 
-  /* Primary - Trustworthy Deep Blue */
-  --primary: 221 83% 53%;
-  --primary-foreground: 210 40% 98%;
+  /* Primary - Fresh Green */
+  --primary: 142 76% 36%;
+  --primary-foreground: 0 0% 100%;
 
-  /* Secondary - Subtle Gray/Blue */
-  --secondary: 210 40% 96.1%;
-  --secondary-foreground: 222 47% 11%;
+  /* Secondary - Light Green Tint */
+  --secondary: 142 30% 95%;
+  --secondary-foreground: 150 30% 10%;
 
-  /* Muted - For secondary text */
-  --muted: 210 40% 96.1%;
-  --muted-foreground: 215.4 16.3% 46.9%;
+  /* Muted */
+  --muted: 150 20% 96%;
+  --muted-foreground: 150 15% 45%;
 
-  /* Accent - For highlights */
-  --accent: 210 40% 96.1%;
-  --accent-foreground: 222 47% 11%;
+  /* Accent - Soft Green */
+  --accent: 142 30% 92%;
+  --accent-foreground: 150 30% 10%;
 
-  /* Destructive - Fake News Red */
-  --destructive: 0 84.2% 60.2%;
-  --destructive-foreground: 210 40% 98%;
+  /* Destructive - Strong Red */
+  --destructive: 0 84% 60%;
+  --destructive-foreground: 0 0% 100%;
 
-  /* Success - Real News Green */
-  --success: 142.1 76.2% 36.3%;
-  --success-foreground: 355.7 100% 97.3%;
+  /* Success - Green */
+  --success: 142 76% 36%;
+  --success-foreground: 0 0% 100%;
 
   /* Borders */
-  --border: 214.3 31.8% 91.4%;
-  --input: 214.3 31.8% 91.4%;
-  --ring: 221 83% 53%;
+  --border: 150 20% 90%;
+  --input: 150 20% 90%;
+  --ring: 142 76% 36%;
 
   --radius: 0.5rem;
 }
 
 .dark {
-  --background: 222 47% 11%;
-  --foreground: 210 40% 98%;
+  --background: 150 30% 8%;
+  --foreground: 150 20% 98%;
 
-  --card: 222 47% 11%;
-  --card-foreground: 210 40% 98%;
+  --card: 150 25% 12%;
+  --card-foreground: 150 20% 98%;
 
-  --popover: 222 47% 11%;
-  --popover-foreground: 210 40% 98%;
+  --popover: 150 25% 12%;
+  --popover-foreground: 150 20% 98%;
 
-  --primary: 217.2 91.2% 59.8%;
-  --primary-foreground: 222.2 47.4% 11.2%;
+  --primary: 142 70% 45%;
+  --primary-foreground: 150 30% 10%;
 
-  --secondary: 217.2 32.6% 17.5%;
-  --secondary-foreground: 210 40% 98%;
+  --secondary: 150 25% 18%;
+  --secondary-foreground: 150 20% 98%;
 
-  --muted: 217.2 32.6% 17.5%;
-  --muted-foreground: 215 20.2% 65.1%;
+  --muted: 150 25% 18%;
+  --muted-foreground: 150 15% 60%;
 
-  --accent: 217.2 32.6% 17.5%;
-  --accent-foreground: 210 40% 98%;
+  --accent: 150 25% 18%;
+  --accent-foreground: 150 20% 98%;
 
-  --destructive: 0 62.8% 30.6%;
-  --destructive-foreground: 210 40% 98%;
+  --destructive: 0 62% 40%;
+  --destructive-foreground: 150 20% 98%;
   
-  --success: 142 70% 25%;
-  --success-foreground: 210 40% 98%;
+  --success: 142 70% 35%;
+  --success-foreground: 150 20% 98%;
 
-  --border: 217.2 32.6% 17.5%;
-  --input: 217.2 32.6% 17.5%;
-  --ring: 224.3 76.3% 48%;
+  --border: 150 25% 20%;
+  --input: 150 25% 20%;
+  --ring: 142 70% 45%;
 }
 
 @layer base {

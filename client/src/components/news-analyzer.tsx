@@ -186,7 +186,7 @@ export function NewsAnalyzer() {
                           </span>
                        </div>
                        <div className="w-full bg-muted h-1.5 rounded-full overflow-hidden">
-                          <div className="bg-blue-500 h-full w-[75%]"></div>
+                          <div className="bg-emerald-500 h-full w-[75%]"></div>
                        </div>
                     </div>
                  </div>
