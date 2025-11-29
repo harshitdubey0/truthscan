@@ -1,11 +1,20 @@
 import { Link } from "wouter";
 import { NewsAnalyzer } from "@/components/news-analyzer";
+import { ModelsDialog } from "@/components/models-dialog";
 import { Button } from "@/components/ui/button";
-import { Github, Info, ScanLine, Activity, Radio } from "lucide-react";
+import { Github, Info, ScanLine, Activity, Radio, Database, BrainCircuit } from "lucide-react";
 import bgImage from "@assets/generated_images/subtle_digital_news_network_background.png";
 import { motion } from "framer-motion";
 
 export default function Home() {
+  // Scroll to news analyzer section
+  const scrollToAnalyzer = () => {
+    const element = document.getElementById('analyzer-section');
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background font-sans selection:bg-primary/20 selection:text-primary overflow-hidden">
       {/* Hero Background with "Cool" Scanning Effect */}
@@ -37,11 +46,24 @@ export default function Home() {
             </span>
           </div>
           <nav className="hidden md:flex items-center gap-6">
-            <a href="#" className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors flex items-center gap-2">
+            <button onClick={scrollToAnalyzer} className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors flex items-center gap-2">
               <Activity className="w-4 h-4" /> Live Analysis
+            </button>
+            
+            <ModelsDialog>
+              <button className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors flex items-center gap-2">
+                <BrainCircuit className="w-4 h-4" /> Models
+              </button>
+            </ModelsDialog>
+
+            <a 
+              href="https://www.kaggle.com/datasets/clmentbisaillon/fake-and-real-news-dataset" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors flex items-center gap-2"
+            >
+              <Database className="w-4 h-4" /> Dataset
             </a>
-            <a href="#" className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors">Models</a>
-            <a href="#" className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors">Dataset</a>
           </nav>
           <div className="flex items-center gap-3">
             <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground">
@@ -87,7 +109,9 @@ export default function Home() {
           </motion.p>
         </div>
 
-        <NewsAnalyzer />
+        <div id="analyzer-section">
+          <NewsAnalyzer />
+        </div>
 
         <div className="mt-24 grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
           {[

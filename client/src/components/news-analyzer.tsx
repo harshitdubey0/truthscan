@@ -4,6 +4,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { AlertCircle, CheckCircle2, Loader2, Newspaper, ShieldCheck, BarChart3 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip as RechartsTooltip, Legend } from 'recharts';
 
 type AnalysisResult = {
   verdict: "real" | "fake";
@@ -19,17 +20,17 @@ export function NewsAnalyzer() {
   const [text, setText] = useState("");
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [result, setResult] = useState<AnalysisResult | null>(null);
+  const [showLiveAnalysis, setShowLiveAnalysis] = useState(false);
 
   const handleAnalyze = () => {
     if (!text.trim()) return;
 
     setIsAnalyzing(true);
     setResult(null);
+    setShowLiveAnalysis(false);
 
     // Simulate API latency
     setTimeout(() => {
-      // Simple heuristic simulation for the prototype
-      // In a real app, this would call the Python backend
       const isFake = Math.random() > 0.5; 
       const confidence = Math.floor(Math.random() * 20) + 80; // 80-99%
 
@@ -47,20 +48,97 @@ export function NewsAnalyzer() {
     }, 1500);
   };
 
+  // Data for Live Analysis Chart
+  const liveData = [
+    { name: 'Real News', value: 52, color: '#10b981' }, // Emerald-500
+    { name: 'Fake News', value: 48, color: '#f43f5e' }, // Rose-500
+  ];
+
   return (
     <div className="w-full max-w-4xl mx-auto space-y-8">
       <Card className="border-none shadow-xl bg-card/50 backdrop-blur-sm overflow-hidden">
         <CardHeader className="bg-primary/5 border-b border-border/50 p-8">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="p-2 bg-primary/10 rounded-lg">
-              <Newspaper className="w-6 h-6 text-primary" />
-            </div>
-            <h2 className="text-2xl font-serif font-bold text-primary">Article Analysis</h2>
+          <div className="flex items-center justify-between">
+             <div className="flex items-center gap-3 mb-2">
+                <div className="p-2 bg-primary/10 rounded-lg">
+                  <Newspaper className="w-6 h-6 text-primary" />
+                </div>
+                <h2 className="text-2xl font-serif font-bold text-primary">Article Analysis</h2>
+             </div>
+             <Button 
+               variant="outline" 
+               size="sm"
+               onClick={() => setShowLiveAnalysis(!showLiveAnalysis)}
+               className={`${showLiveAnalysis ? 'bg-primary/10 text-primary border-primary/20' : ''}`}
+             >
+                <BarChart3 className="w-4 h-4 mr-2" />
+                {showLiveAnalysis ? "Hide Live Stats" : "Live Analysis"}
+             </Button>
           </div>
           <CardDescription className="text-base">
             Paste the news article content below. Our ensemble of ML models will analyze semantic patterns to determine authenticity.
           </CardDescription>
         </CardHeader>
+
+        <AnimatePresence>
+          {showLiveAnalysis && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: "auto", opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              className="border-b border-border/50 bg-muted/10 overflow-hidden"
+            >
+              <div className="p-6 grid md:grid-cols-2 gap-8 items-center">
+                 <div className="h-64 w-full">
+                    <h3 className="text-center font-serif font-bold mb-4 text-foreground/80">Current Detection Distribution</h3>
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={liveData}
+                          cx="50%"
+                          cy="50%"
+                          innerRadius={60}
+                          outerRadius={80}
+                          paddingAngle={5}
+                          dataKey="value"
+                        >
+                          {liveData.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={entry.color} strokeWidth={0} />
+                          ))}
+                        </Pie>
+                        <RechartsTooltip 
+                          contentStyle={{ backgroundColor: 'hsl(var(--popover))', borderRadius: '8px', border: '1px solid hsl(var(--border))' }}
+                          itemStyle={{ color: 'hsl(var(--foreground))' }}
+                        />
+                        <Legend verticalAlign="bottom" height={36}/>
+                      </PieChart>
+                    </ResponsiveContainer>
+                 </div>
+                 <div className="space-y-4">
+                    <div className="p-4 bg-background/50 rounded-xl border border-border/50">
+                       <div className="flex justify-between items-center mb-2">
+                          <span className="text-sm text-muted-foreground">Active Models</span>
+                          <span className="text-sm font-bold text-primary">4 Online</span>
+                       </div>
+                       <div className="w-full bg-muted h-1.5 rounded-full overflow-hidden">
+                          <div className="bg-primary h-full w-full animate-pulse"></div>
+                       </div>
+                    </div>
+                    <div className="p-4 bg-background/50 rounded-xl border border-border/50">
+                       <div className="flex justify-between items-center mb-2">
+                          <span className="text-sm text-muted-foreground">Daily Scans</span>
+                          <span className="text-sm font-bold text-primary">14,203</span>
+                       </div>
+                       <div className="w-full bg-muted h-1.5 rounded-full overflow-hidden">
+                          <div className="bg-blue-500 h-full w-[75%]"></div>
+                       </div>
+                    </div>
+                 </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         <CardContent className="p-8">
           <Textarea 
             placeholder="Paste the full text of the article here..." 
