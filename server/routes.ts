@@ -4,22 +4,53 @@ import { storage } from "./storage";
 import { mlAnalyzer } from "./ml-analyzer";
 import { analyzeRequestSchema } from "@shared/schema";
 
+const ML_SERVICE_URL = process.env.ML_SERVICE_URL || 'http://localhost:5001';
+
 export async function registerRoutes(
   httpServer: Server,
   app: Express
 ): Promise<Server> {
   
+  // Check ML service status
+  app.get("/api/ml/status", async (req, res) => {
+    try {
+      const response = await fetch(`${ML_SERVICE_URL}/api/ml/status`);
+      const data = await response.json();
+      res.json(data);
+    } catch (error) {
+      res.json({ trained: false, models_count: 0, fallback: true });
+    }
+  });
+
   // Analyze news article
   app.post("/api/analyze", async (req, res) => {
     try {
       const { text } = analyzeRequestSchema.parse(req.body);
       
-      // Use ML analyzer to get predictions
-      const result = mlAnalyzer.analyze(text);
+      let result;
+      
+      // Try Python ML service first
+      try {
+        const mlResponse = await fetch(`${ML_SERVICE_URL}/api/ml/analyze`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text }),
+        });
+        
+        if (mlResponse.ok) {
+          result = await mlResponse.json();
+        } else {
+          // Fallback to JS analyzer
+          result = mlAnalyzer.analyze(text);
+        }
+      } catch (mlError) {
+        // Fallback to JS analyzer if Python service is unavailable
+        result = mlAnalyzer.analyze(text);
+      }
       
       // Store analysis in history
       await storage.createAnalysis({
-        articleText: text.substring(0, 500), // Store first 500 chars
+        articleText: text.substring(0, 500),
         verdict: result.verdict,
         confidence: result.confidence,
         modelPredictions: JSON.stringify(result.models),
@@ -39,7 +70,7 @@ export async function registerRoutes(
       const stats = await storage.getAnalysisStats();
       
       // Calculate percentages
-      const total = stats.totalScans || 1; // Avoid division by zero
+      const total = stats.totalScans || 1;
       const fakePercentage = Math.round((stats.fakeCount / total) * 100);
       const realPercentage = Math.round((stats.realCount / total) * 100);
       
